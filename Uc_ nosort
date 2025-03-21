@@ -8,13 +8,18 @@ ciq_folder = "./ciq_files/"
 # Get all Excel files in the folder
 ciq_files = glob.glob(os.path.join(ciq_folder, "*.xlsx"))
 
-# Collect all unique column names while preserving the order
-all_columns = []
-seen_columns = set()
+# Dictionary to store column names from each CIQ
+ciq_columns = {}
 
 for file in ciq_files:
     df = pd.read_excel(file)
-    for col in df.columns:
+    ciq_columns[file] = set(df.columns)
+
+# Collect all unique columns while preserving order
+all_columns = []
+seen_columns = set()
+for cols in ciq_columns.values():
+    for col in cols:
         if col not in seen_columns:
             all_columns.append(col)
             seen_columns.add(col)
@@ -24,4 +29,25 @@ unique_columns_df = pd.DataFrame(columns=all_columns)
 unique_columns_path = os.path.join(ciq_folder, "unique_columns.xlsx")
 unique_columns_df.to_excel(unique_columns_path, index=False)
 
-print(f"Unique column names saved to {unique_columns_path}")
+# Total number of unique columns and their names
+print(f"Total unique columns across all CIQs: {len(all_columns)}")
+print(f"Unique column names: {all_columns}\n")
+
+# Find common columns across all CIQs
+common_columns = set.intersection(*ciq_columns.values())
+print(f"Common columns in all CIQs: {len(common_columns)}")
+print(f"Common column names: {list(common_columns)}\n")
+
+# Pairwise comparison of common and uncommon columns
+print("Pairwise analysis of CIQs:\n")
+ciq_files_sorted = sorted(ciq_columns.keys())
+
+for i in range(len(ciq_files_sorted)):
+    for j in range(i + 1, len(ciq_files_sorted)):
+        ciq1, ciq2 = ciq_files_sorted[i], ciq_files_sorted[j]
+        common = ciq_columns[ciq1] & ciq_columns[ciq2]
+        uncommon = ciq_columns[ciq1] ^ ciq_columns[ciq2]  # Symmetric difference
+
+        print(f"Between {os.path.basename(ciq1)} and {os.path.basename(ciq2)}:")
+        print(f"- Common columns ({len(common)}): {list(common)}")
+        print(f"- Uncommon columns ({len(uncommon)}): {list(uncommon)}\n")

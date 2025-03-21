@@ -1,0 +1,27 @@
+import pandas as pd
+import glob
+import os
+
+# Folder containing CIQ Excel files
+ciq_folder = "./ciq_files/"
+
+# Get all Excel files in the folder
+ciq_files = glob.glob(os.path.join(ciq_folder, "*.xlsx"))
+
+# Collect all unique column names while preserving the order
+all_columns = []
+seen_columns = set()
+
+for file in ciq_files:
+    df = pd.read_excel(file)
+    for col in df.columns:
+        if col not in seen_columns:
+            all_columns.append(col)
+            seen_columns.add(col)
+
+# Save unique column names to an Excel file
+unique_columns_df = pd.DataFrame(columns=all_columns)
+unique_columns_path = os.path.join(ciq_folder, "unique_columns.xlsx")
+unique_columns_df.to_excel(unique_columns_path, index=False)
+
+print(f"Unique column names saved to {unique_columns_path}")
